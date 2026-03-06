@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yxsc pc - 云星搜索引擎PC版</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #f5f5f5;
+            --border-color: #e0e0e0;
+            --hover-color: #e9e9e9;
+            --primary-color: #0078d7;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f5f5f5;
+            --card-bg: #2d2d2d;
+            --border-color: #444444;
+            --hover-color: #383838;
+            --primary-color: #1b88e5;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Logo样式 */
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        /* 头部工具栏 */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 18px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* 搜索区域 - 重构为行内布局 */
+        .search-container {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .search-box {
+            flex: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 24px 0 0 24px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            border-right: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 120, 215, 0.1);
+        }
+
+        /* 下拉选择器样式 */
+        .engine-selector {
+            position: relative;
+            width: 120px;
+            height: 48px;
+        }
+
+        .select-btn {
+            width: 100%;
+            height: 100%;
+            padding: 0 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 0 24px 24px 0;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .select-btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        .select-btn:focus {
+            border-color: var(--primary-color);
+        }
+
+        .select-icon {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .engine-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 5px;
+            list-style: none;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .engine-list.show {
+            display: block;
+        }
+
+        .engine-item {
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .engine-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .engine-item.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .search-btn {
+            width: 120px;
+            height: 40px;
+            border: none;
+            border-radius: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+
+        .search-btn:hover {
+            background-color: #005a9e;
+        }
+
+        /* 弹窗通用样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* 捷径窗口 */
+        .shortcut-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .shortcut-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .shortcut-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .shortcut-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .shortcut-name {
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .add-shortcut {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .add-shortcut input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .add-shortcut button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+        }
+
+        /* 设置帮助窗口 */
+        .help-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .help-section {
+            margin-bottom: 20px;
+        }
+
+        .help-section h4 {
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        /* 壁纸设置 */
+        .wallpaper-setting {
+            margin-top: 20px;
+        }
+
+        .wallpaper-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        #wallpaper-input {
+            display: none;
+        }
+
+        .upload-btn {
+            padding: 8px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        .reset-wallpaper {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: #f44336;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+    </style>
+    <!-- 引入Font Awesome图标库 -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+        <button class="toolbar-btn" id="theme-toggle" title="切换主题">
+            <i class="fas fa-moon"></i>
+        </button>
+        <button class="toolbar-btn" id="help-btn" title="设置帮助">
+            <i class="fas fa-question"></i>
+        </button>
+        <button class="toolbar-btn" id="setting-btn" title="设置">
+            <i class="fas fa-cog"></i>
+        </button>
+        <a href="https://github.com/your-repo" target="_blank" class="toolbar-btn" title="开源仓库">
+            <i class="fab fa-github"></i>
+        </a>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 纯文字Logo -->
+        <div class="logo">yxsc pc</div>
+        
+        <!-- 搜索区域（重构） -->
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="search-input" placeholder="输入搜索内容或网址...">
+            </div>
+            <!-- 搜索引擎下拉选择器 -->
+            <div class="engine-selector">
+                <button class="select-btn" id="select-btn">
+                    <span id="active-engine-text">必应</span>
+                    <i class="fas fa-chevron-down select-icon" id="select-icon"></i>
+                </button>
+                <ul class="engine-list" id="engine-list">
+                    <li class="engine-item active" data-engine="bing-cn">必应</li>
+                    <li class="engine-item" data-engine="bing">必应国际版</li>
+                    <li class="engine-item" data-engine="baidu">百度</li>
+                    <li class="engine-item" data-engine="360">360搜索</li>
+                    <li class="engine-item" data-engine="pure">纯网址</li>
+                </ul>
+            </div>
+        </div>
+        
+        <button class="search-btn" id="search-btn">搜索</button>
+    </div>
+
+    <!-- 捷径窗口 -->
+    <div class="modal" id="shortcut-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="shortcut-close">&times;</button>
+            <h3 class="modal-title">捷径</h3>
+            <div class="shortcut-list" id="shortcut-list">
+                <!-- 动态生成捷径项 -->
+            </div>
+            <div class="add-shortcut">
+                <input type="text" id="shortcut-name" placeholder="网站名称">
+                <input type="text" id="shortcut-url" placeholder="网站网址">
+                <button id="add-shortcut-btn">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置帮助窗口 -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="help-close">&times;</button>
+            <h3 class="modal-title">设置帮助</h3>
+            <div class="help-content">
+                <div class="help-section">
+                    <h4>Chrome/Edge浏览器设置主页</h4>
+                    <p>1. 点击浏览器右上角三个点 → 设置</p>
+                    <p>2. 在"外观"中开启"显示主页按钮"</p>
+                    <p>3. 点击"更改"，输入yxsc网址并保存</p>
+                </div>
+                <div class="help-section">
+                    <h4>Firefox浏览器设置主页</h4>
+                    <p>1. 点击浏览器右上角三条横线 → 设置</p>
+                    <p>2. 在"主页"选项中，将"主页和新窗口"改为"自定义网址"</p>
+                    <p>3. 输入yxsc网址并保存</p>
+                </div>
+                <div class="help-section">
+                    <h4>360浏览器设置主页</h4>
+                    <p>1. 点击浏览器右上角三条横线 → 设置</p>
+                    <p>2. 选择"主页设置"，关闭"锁定主页"</p>
+                    <p>3. 输入yxsc网址并点击"应用"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置窗口 -->
+    <div class="modal" id="setting-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="setting-close">&times;</button>
+            <h3 class="modal-title">设置</h3>
+            <div class="wallpaper-setting">
+                <h4>壁纸设置</h4>
+                <div class="wallpaper-upload">
+                    <label for="wallpaper-input" class="upload-btn">选择壁纸</label>
+                    <input type="file" id="wallpaper-input" accept="image/*">
+                    <button class="reset-wallpaper" id="reset-wallpaper">重置壁纸</button>
+                </div>
+                <p>提示：上传的壁纸会保存在本地，刷新页面不会丢失</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        const defaultShortcuts = [
+            { name: "B站", url: "https://www.bilibili.com" },
+            { name: "知乎", url: "https://www.zhihu.com" },
+            { name: "微博", url: "https://weibo.com" },
+            { name: "淘宝", url: "https://www.taobao.com" },
+            { name: "京东", url: "https://www.jd.com" },
+            { name: "网易云", url: "https://music.163.com" }
+        ];
+
+        const searchEngines = {
+            "bing-cn": "https://cn.bing.com/search?q=",
+            "bing": "https://www.bing.com/search?q=",
+            "baidu": "https://www.baidu.com/s?wd=",
+            "360": "https://www.so.com/s?q=",
+            "pure": ""
+        };
+
+        // 当前激活的搜索引擎
+        let activeEngine = "bing-cn";
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化
+            initShortcuts();
+            initWallpaper();
+            initTheme();
+            initEngineSelector();
+            
+            // 事件绑定
+            bindEvents();
+        });
+
+        // 初始化捷径
+        function initShortcuts() {
+            // 从本地存储获取捷径，没有则使用默认值
+            let shortcuts = localStorage.getItem('yxsc-shortcuts');
+            shortcuts = shortcuts ? JSON.parse(shortcuts) : defaultShortcuts;
+            
+            // 渲染捷径列表
+            renderShortcuts(shortcuts);
+        }
+
+        // 渲染捷径列表
+        function renderShortcuts(shortcuts) {
+            const shortcutList = document.getElementById('shortcut-list');
+            shortcutList.innerHTML = '';
+            
+            shortcuts.forEach(item => {
+                const shortcutItem = document.createElement('div');
+                shortcutItem.className = 'shortcut-item';
+                shortcutItem.innerHTML = `
+                    <div class="shortcut-icon"><i class="fas fa-globe"></i></div>
+                    <div class="shortcut-name">${item.name}</div>
+                `;
+                shortcutItem.addEventListener('click', () => {
+                    window.open(item.url, '_blank');
+                });
+                shortcutList.appendChild(shortcutItem);
+            });
+        }
+
+        // 初始化壁纸
+        function initWallpaper() {
+            const wallpaper = localStorage.getItem('yxsc-wallpaper');
+            if (wallpaper) {
+                document.body.style.backgroundImage = `url(${wallpaper})`;
+            }
+        }
+
+        // 初始化主题
+        function initTheme() {
+            const isDark = localStorage.getItem('yxsc-darkmode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        }
+
+        // 初始化搜索引擎选择器
+        function initEngineSelector() {
+            // 设置默认选中状态
+            document.getElementById('active-engine-text').textContent = getEngineName(activeEngine);
+            document.querySelectorAll('.engine-item').forEach(item => {
+                if (item.dataset.engine === activeEngine) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // 根据引擎key获取显示名称
+        function getEngineName(engineKey) {
+            const engineNames = {
+                "bing-cn": "必应",
+                "bing": "必应国际版",
+                "baidu": "百度",
+                "360": "360搜索",
+                "pure": "纯网址"
+            };
+            return engineNames[engineKey] || "必应";
+        }
+
+        // 绑定所有事件
+        function bindEvents() {
+            // 禁用右键，打开捷径窗口
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                document.getElementById('shortcut-modal').classList.add('show');
+            });
+
+            // 关闭弹窗
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').classList.remove('show');
+                });
+            });
+
+            // 点击弹窗外区域关闭
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+
+            // 添加捷径
+            document.getElementById('add-shortcut-btn').addEventListener('click', function() {
+                const name = document.getElementById('shortcut-name').value.trim();
+                const url = document.getElementById('shortcut-url').value.trim();
+                
+                if (!name || !url) {
+                    alert('请输入完整的网站名称和网址');
+                    return;
+                }
+
+                // 补全网址前缀
+                let fullUrl = url;
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    fullUrl = 'https://' + url;
+                }
+
+                // 获取现有捷径
+                let shortcuts = localStorage.getItem('yxsc-shortcuts');
+                shortcuts = shortcuts ? JSON.parse(shortcuts) : defaultShortcuts;
+                
+                // 添加新捷径
+                shortcuts.push({ name, url: fullUrl });
+                
+                // 保存并重新渲染
+                localStorage.setItem('yxsc-shortcuts', JSON.stringify(shortcuts));
+                renderShortcuts(shortcuts);
+                
+                // 清空输入框
+                document.getElementById('shortcut-name').value = '';
+                document.getElementById('shortcut-url').value = '';
+                
+                alert('捷径添加成功！');
+            });
+
+            // 搜索引擎选择器 - 切换显示/隐藏
+            document.getElementById('select-btn').addEventListener('click', function() {
+                const list = document.getElementById('engine-list');
+                const icon = document.getElementById('select-icon');
+                
+                list.classList.toggle('show');
+                icon.style.transform = list.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
+            });
+
+            // 选择搜索引擎
+            document.querySelectorAll('.engine-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // 更新激活状态
+                    activeEngine = this.dataset.engine;
+                    
+                    // 更新UI
+                    document.querySelectorAll('.engine-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('active-engine-text').textContent = getEngineName(activeEngine);
+                    
+                    // 关闭下拉列表
+                    document.getElementById('engine-list').classList.remove('show');
+                    document.getElementById('select-icon').style.transform = 'rotate(0)';
+                });
+            });
+
+            // 点击页面其他区域关闭下拉列表
+            document.addEventListener('click', function(e) {
+                const selector = document.querySelector('.engine-selector');
+                if (!selector.contains(e.target)) {
+                    document.getElementById('engine-list').classList.remove('show');
+                    document.getElementById('select-icon').style.transform = 'rotate(0)';
+                }
+            });
+
+            // 搜索按钮点击
+            document.getElementById('search-btn').addEventListener('click', performSearch);
+            
+            // 回车搜索
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // 主题切换
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                const isDark = document.body.classList.toggle('dark-mode');
+                localStorage.setItem('yxsc-darkmode', isDark);
+                this.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+
+            // 打开帮助窗口
+            document.getElementById('help-btn').addEventListener('click', function() {
+                document.getElementById('help-modal').classList.add('show');
+            });
+
+            // 打开设置窗口
+            document.getElementById('setting-btn').addEventListener('click', function() {
+                document.getElementById('setting-modal').classList.add('show');
+            });
+
+            // 壁纸上传
+            document.getElementById('wallpaper-input').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const base64 = event.target.result;
+                        localStorage.setItem('yxsc-wallpaper', base64);
+                        document.body.style.backgroundImage = `url(${base64})`;
+                        alert('壁纸设置成功！');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // 重置壁纸
+            document.getElementById('reset-wallpaper').addEventListener('click', function() {
+                localStorage.removeItem('yxsc-wallpaper');
+                document.body.style.backgroundImage = '';
+                alert('壁纸已重置！');
+            });
+        }
+
+        // 执行搜索
+        function performSearch() {
+            const input = document.getElementById('search-input').value.trim();
+            if (!input) return;
+
+            // 获取选中的搜索引擎
+            const engineUrl = searchEngines[activeEngine];
+
+            // 处理纯网址模式
+            if (activeEngine === 'pure') {
+                let url = input;
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                window.open(url, '_blank');
+            } else {
+                // 普通搜索
+                window.open(engineUrl + encodeURIComponent(input), '_blank');
+            }
+            
+            // 清空输入框
+            document.getElementById('search-input').value = '';
+        }
+    </script>
+</body>
+</html>
